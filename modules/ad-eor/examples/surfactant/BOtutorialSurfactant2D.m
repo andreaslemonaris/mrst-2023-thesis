@@ -76,7 +76,7 @@ scheduleW.control(2).W(1).cs = 0;
 scheduleW.control(2).W(2).cs = 0;
 scheduleW.control(3).W(1).cs = 0;
 scheduleW.control(3).W(2).cs = 0;
-[wellSolsW, statesW, reportW] = simulateScheduleAD(state0, model, scheduleW, 'afterStepFn', fn);    
+[wellSolsW, statesW, reportW] = simulateScheduleAD(state0, model, scheduleW, 'afterStepFn', fn);
 
 %% Plot cell oil saturation in different tsteps of water flooding and surfactant flooding
 T = (80:23:268);

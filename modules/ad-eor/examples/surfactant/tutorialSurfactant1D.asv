@@ -70,6 +70,7 @@ disp(model.FlowDiscretization);
 plotStateFunctionGroupings(model.PVTPropertyFunctions);
 plotStateFunctionGroupings(model.FlowPropertyFunctions);
 plotStateFunctionGroupings(model.FlowDiscretization);
+disp()
 
 %% Convert the deck schedule into a MRST schedule by parsing the wells
 %

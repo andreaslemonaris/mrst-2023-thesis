@@ -29,7 +29,6 @@ classdef OilWaterSurfactantModel < ThreePhaseSurfactantPolymerModel
     methods
 
         function model = OilWaterSurfactantModel(G, rock, fluid, varargin)
-disp('APOEL')
             model = model@ThreePhaseSurfactantPolymerModel(G, rock, fluid);
             model.surfactant = true;
             model.gas = false;
