@@ -62,7 +62,7 @@ model = OilWaterSurfactantModel(G, rock, fluid, ...
                                                   'inputdata', deck, ...
                                                   'extraStateOutput', true);
 
-inspectFluidModel(model,'field','Densities')
+inspectFluidModel(model,'field','Densities');
 model = model.setupStateFunctionGroupings();
 disp(model);
 disp(model.PVTPropertyFunctions);

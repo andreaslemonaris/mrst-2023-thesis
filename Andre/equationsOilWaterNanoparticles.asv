@@ -112,8 +112,8 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
         pvMult =  fluid.pvMultR(p);
         pvMult0 = fluid.pvMultR(p0);
     end
-%    pv = pv.*pvMult;
-%    pv0 = pv0.*pvMult0;
+    pv = pv.*pvMult;
+    pv0 = pv0.*pvMult0;
 
     [bW, bO]     = deal(b{:});
     [bW0, bO0]   = deal(b0{:});
