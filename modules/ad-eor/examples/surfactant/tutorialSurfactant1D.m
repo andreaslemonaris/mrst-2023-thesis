@@ -62,6 +62,7 @@ model = OilWaterSurfactantModel(G, rock, fluid, ...
                                                   'inputdata', deck, ...
                                                   'extraStateOutput', true);
 
+inspectFluidModel(model,'field','Densities')
 model = model.setupStateFunctionGroupings();
 disp(model);
 disp(model.PVTPropertyFunctions);
@@ -70,6 +71,7 @@ disp(model.FlowDiscretization);
 plotStateFunctionGroupings(model.PVTPropertyFunctions);
 plotStateFunctionGroupings(model.FlowPropertyFunctions);
 plotStateFunctionGroupings(model.FlowDiscretization);
+disp(model.operators);
 
 %% Convert the deck schedule into a MRST schedule by parsing the wells
 %
