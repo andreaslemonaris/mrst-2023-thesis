@@ -80,16 +80,16 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     if ~opt.resOnly
         % ADI variables needed since we are not only computing residuals.
         if ~opt.reverseMode
-            [p, sW, cs, cs1, cs2] = initVariablesADI(p, sW, cs, cs1, cs2); %#ok
+            [p, sW, cs, cs1, cs2] = initVariablesADI(p, sW, cs, cs1, cs2); 
         else
             % wellVars0 = model.FacilityModel.getAllPrimaryVariables(wellSol0);
-            [p0, sW0, cs0, cs10, cs20] = initVariablesADI(p0, sW0, cs0, cs10, cs20); %#ok
+            [p0, sW0, cs0, cs10, cs20] = initVariablesADI(p0, sW0, cs0, cs10, cs20); 
         end
     end
 
     % We will solve for pressure, water saturation (oil saturation follows via
     % the definition of saturations) and surfactant concentration
-    primaryVars = {'pressure', 'sW', 'surfactant'};
+    primaryVars = {'pressure', 'sW', 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
 
     sO  = 1 - sW;
     sO0 = 1 - sW0;
@@ -108,12 +108,12 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     [phaseFlux, flags]    = model.getProps(state, 'PhaseFlux', 'PhaseUpwindFlag');
     [pressures, mob, rho] = model.getProps(state, 'PhasePressures', 'Mobility', 'Density');
     
-    if isfield(fluid, 'pvMultR')
-        pvMult =  fluid.pvMultR(p);
-        pvMult0 = fluid.pvMultR(p0);
-    end
-    pv = pv.*pvMult;
-    pv0 = pv0.*pvMult0;
+%    if isfield(fluid, 'pvMultR')
+%        pvMult =  fluid.pvMultR(p);
+%        pvMult0 = fluid.pvMultR(p0);
+%    end
+%    pv = pv.*pvMult;
+%    pv0 = pv0.*pvMult0;
 
     [bW, bO]     = deal(b{:});
     [bW0, bO0]   = deal(b0{:});
@@ -142,35 +142,36 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     %ads0 = model.getProp(state0, 'SurfactantAdsorption');
     %ads_term = fluid.rhoRSft.*((1-poro)./poro).*(ads - ads0);
 
-    %Computation of deposition term
-        % Set parameters
-        vc = 4.6e-6;
-        gamma_d = 16;
-        gamma_e = 30;
-
-        %deposition equation:
-        if vW <= vc
-          deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(vW).*cs); 
-        else
-            deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(vW).*cs) + (gamma_e.*abs(vW-vc).*cs1);
+    % Computation of deposition term
+    % Set parameters
+    vc = 4.6e-6;
+    gamma_d = 16;
+    gamma_e = 30;
+    bWvc = op.faceUpstr(upcw, bW).*vc;
     
+    % deposition equation:
+    if vW <= vc
+        deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(bWvW).*cs); 
+    else
+        deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(bWvW).*cs) + (gamma_e.*abs(bWvW-bWvc).*cs1);
+    end
+   
     % Computation of entrapment term
-        %Set Parameters
-        gamma_pt = 1.28;
+    % Set Parameters
+    gamma_pt = 1.28;
 
-        %entrapment equation
-        entrapment = (1/dt).*(cs2-cs20) - (gamma_pt.*abs(vW).*cs);
+    % entrapment equation
+    entrapment = (1/dt).*(cs2-cs20) - (gamma_pt.*abs(vW).*cs);
 
     % Conservation of surfactant in water:
     vSft   = op.faceUpstr(upcw, cs).*vW;
     bWvSft = op.faceUpstr(upcw, bW).*vSft;
-
-    poro = model.rock.poro;
     D = 5.6e-8;
+    
     % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0) + (op.pv/dt).*ads_term;
     % divSurfactant = op.Div(bWvSft);
     surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    divSurfactant = op.Div(bWvSft-poro.*sW.*D.*op.Grad(cs)); %unsure about the operator op.Grad
+    divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs)); %Not sure about porosity and faceUpstr
     surfactant = surfactant + divSurfactant - (deposition + entrapment);
     
     if ~opt.resOnly
