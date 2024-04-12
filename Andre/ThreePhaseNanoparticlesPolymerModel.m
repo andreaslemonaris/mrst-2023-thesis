@@ -394,6 +394,12 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 qW = src.phaseMass{1}./model.fluid.rhoWS;
                 isInj = qW > 0;
                 qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
+              case {'surfactant'}
+                % Water based EOR, multiply by water flux divided by
+                % density and add into corresponding equation
+                qW = src.phaseMass{1}./model.fluid.rhoWS;
+                isInj = qW > 0;
+                qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
               otherwise
                 error(['Unknown component ''', cname, '''. BC not implemented.']);
             end

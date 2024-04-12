@@ -143,39 +143,39 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     %ads_term = fluid.rhoRSft.*((1-poro)./poro).*(ads - ads0);
 
     % Marilena ---- Begin:
-    gamma_pt = 1.28;
-    vc = 4.6e-6;
-    gamma_d = 16;
-    gamma_e = 30;
-    bWvc = op.faceUpstr(upcw, bW).*vc;
-
-    term_cs1_simple = gamma_d.*abs(bWvW).*cs;
-    term_cs2 = gamma_pt.*abs(vW).*cs;
-    term_cs1_compl = gamma_e.*abs(bWvW-bWvc).*cs1;
-
-    if vW <= vc
-        RHS_cs1 = term_cs1_simple;
-        RHS = term_cs1_simple + term_cs2;
-    else
-        RHS_cs1 = term_cs1_simple - term_cs1_compl;
-        RHS = term_cs1_simple - term_cs1_compl + term_cs2;
-    end
-
-
-    vSft   = op.faceUpstr(upcw, cs).*vW;
-    bWvSft = op.faceUpstr(upcw, bW).*vSft;
-    D = 5.6e-8;
-
-    surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs));
-
-    % 2 equations with 2 unknowns i.e., cs and cs1:
-    eq_1 = surfactant + divSurfactant - RHS;
-    eq_2 = (1/dt).*(cs1 -cs10) - RHS_cs1;
-
-    eq_3 = (1/dt).*(cs2-cs20) - term_cs2;
-
-     % Marilena ---- END
+    % gamma_pt = 1.28;
+    % vc = 4.6e-6;
+    % gamma_d = 16;
+    % gamma_e = 30;
+    % bWvc = op.faceUpstr(upcw, bW).*vc;
+    % 
+    % term_cs1_simple = gamma_d.*abs(bWvW).*cs;
+    % term_cs2 = gamma_pt.*abs(vW).*cs;
+    % term_cs1_compl = gamma_e.*abs(bWvW-bWvc).*cs1;
+    % 
+    % if vW <= vc
+    %     RHS_cs1 = term_cs1_simple;
+    %     RHS = term_cs1_simple + term_cs2;
+    % else
+    %     RHS_cs1 = term_cs1_simple - term_cs1_compl;
+    %     RHS = term_cs1_simple - term_cs1_compl + term_cs2;
+    % end
+    % 
+    % 
+    % vSft   = op.faceUpstr(upcw, cs).*vW;
+    % bWvSft = op.faceUpstr(upcw, bW).*vSft;
+    % D = 5.6e-8;
+    % 
+    % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
+    % divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs));
+    % 
+    % % 2 equations with 2 unknowns i.e., cs and cs1:
+    % eq_1 = surfactant + divSurfactant - RHS;
+    % eq_2 = (1/dt).*(cs1 -cs10) - RHS_cs1;
+    % 
+    % eq_3 = (1/dt).*(cs2-cs20) - term_cs2;
+    % 
+    %  % Marilena ---- END
 
     % % Computation of deposition term
     % % Set parameters
@@ -199,16 +199,27 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     % entrapment = (1/dt).*(cs2-cs20) - (gamma_pt.*abs(vW).*cs);
     % 
     % % Conservation of surfactant in water:
-    % vSft   = op.faceUpstr(upcw, cs).*vW;
-    % bWvSft = op.faceUpstr(upcw, bW).*vSft;
-    % D = 5.6e-8;
-    % 
-    % % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0) + (op.pv/dt).*ads_term;
-    % % divSurfactant = op.Div(bWvSft);
-    % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    % divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs)); %Not sure about porosity and faceUpstr
-    % surfactant = surfactant + divSurfactant - (deposition + entrapment);
+    vSft   = op.faceUpstr(upcw, cs).*vW;
+    bWvSft = op.faceUpstr(upcw, bW).*vSft;
+    D = 5.6e-8*ones(G.cells.num, 1);
+    D = initVariablesADI(D);
     
+    % res1 = op.Grad(cs);
+    % Sft = op.faceUpstr(upcw, cs);
+    % res2 = op.Grad (Sft);
+    % bWSft = op.faceUpstr(upcw, bW).*op.Grad(Sft);
+    % pvbWSft = op.faceUpstr(upcw, pv).*bWSft;
+    % pvDbWdSft = op.faceUpstr(upcw, D).*pvbWSft;
+
+    % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0); % + (op.pv/dt).*ads_term;
+    % divSurfactant = op.Div(bWvSft);
+    % surfactant = surfactant + divSurfactant;
+    surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
+    divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs)); %Not sure about porosity and faceUpstr
+    fprintf('after: %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n \n', size(D), size(bW),size(sW),size(pv), size(cs),size(bW0),size(sW0),size(pv0), size(cs0), size(dt))
+   
+    surfactant = surfactant + divSurfactant; % - (deposition + entrapment);
+
     if ~opt.resOnly
         epsilon = 1.e-8;
         % the first way is based on the diagonal values of the resulting
@@ -226,31 +237,30 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
 
     % Marilena ---- Begin:
 
-    eqs      = {water   , oil   , eq1, eq2, eq3};
-    names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
-    types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
-    components = {cs};
+    % eqs      = {water   , oil   , eq1, eq2, eq3};
+    % names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
+    % types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
+    % components = {cs};
 
     % Marilena ---- END
 
-    % eqs      = {water   , oil   , surfactant};
-    % names    = {'water' , 'oil' , 'surfactant'};
-    % types    = {'cell'  , 'cell', 'cell'};
-    % components = {cs};
+    eqs      = {water   , oil   , surfactant};
+    names    = {'water' , 'oil' , 'surfactant'};
+    types    = {'cell'  , 'cell', 'cell'};
+    components = {cs};
     
     [eqs, state] = addBoundaryConditionsAndSources(model, eqs, names, types, ...
                                                    state, pressures, sat, mob, ...
                                                    rho, {}, components, ...
                                                    drivingForces);
-    % Finally, add in and setup well equations
-    [eqs, names, types, state.wellSol] = model.insertWellEquations(eqs, names, ...
-                                                      types, wellSol0, wellSol, ...
-                                                      wellVars, wellMap, p, ...
-                                                      mob, rho, {}, components, ...
-                                                      dt, opt);
+    % % Finally, add in and setup well equations
+    % [eqs, names, types, state.wellSol] = model.insertWellEquations(eqs, names, ...
+    %                                                   types, wellSol0, wellSol, ...
+    %                                                   wellVars, wellMap, p, ...
+    %                                                   mob, rho, {}, components, ...
+    %                                                   dt, opt);
 
     problem = LinearizedProblem(eqs, types, names, primaryVars, state, dt);
-
 end
 
 
