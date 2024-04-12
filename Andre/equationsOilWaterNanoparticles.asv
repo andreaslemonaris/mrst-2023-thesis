@@ -144,10 +144,10 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
 
     % Marilena ---- Begin:
     gamma_pt = 1.28;
-    vc = 4.6e-6;
-    gamma_d = 16;
-    gamma_e = 30;
-    bWvc = op.faceUpstr(upcw, bW).*vc;
+        % vc = 4.6e-6;
+    % gamma_d = 16;
+    % gamma_e = 30;
+    % bWvc = op.faceUpstr(upcw, bW).*vc;
 
     term_cs1_simple = gamma_d.*abs(bWvW).*cs;
     term_cs2 = gamma_pt.*abs(vW).*cs;
