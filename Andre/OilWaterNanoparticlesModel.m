@@ -40,8 +40,8 @@ classdef OilWaterNanoparticlesModel < ThreePhaseNanoparticlesPolymerModel
           
             
             model = merge_options(model, varargin{:});
-%            model.operators.veloc   = computeVelocTPFA(G, model.operators.internalConn);
-%            model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
+           model.operators.veloc   = computeVelocTPFA(G, model.operators.internalConn);
+           model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
         end
 
         function [problem, state] = getEquations(model, state0, state, dt, drivingForces, varargin)

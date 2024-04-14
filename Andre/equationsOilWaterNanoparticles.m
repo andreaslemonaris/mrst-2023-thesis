@@ -52,7 +52,8 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
 %}
 
     opt = struct('Verbose'        , mrstVerbose, ...
-                 'reverseMode'    , false      , ... %'velocCompMethod', 'square'   , ...
+                 'reverseMode'    , false      , ... 
+                 'velocCompMethod', 'square'   , ...
                  'resOnly'        , false      , ...
                  'iteration'      , -1 );
     opt = merge_options(opt, varargin{:});
@@ -108,12 +109,12 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     [phaseFlux, flags]    = model.getProps(state, 'PhaseFlux', 'PhaseUpwindFlag');
     [pressures, mob, rho] = model.getProps(state, 'PhasePressures', 'Mobility', 'Density');
     
-%    if isfield(fluid, 'pvMultR')
-%        pvMult =  fluid.pvMultR(p);
-%        pvMult0 = fluid.pvMultR(p0);
-%    end
-%    pv = pv.*pvMult;
-%    pv0 = pv0.*pvMult0;
+    % if isfield(fluid, 'pvMultR')
+    %     pvMult =  fluid.pvMultR(p);
+    %     pvMult0 = fluid.pvMultR(p0);
+    % end
+    % pv = pv.*pvMult;
+    % pv0 = pv0.*pvMult0;
 
     [bW, bO]     = deal(b{:});
     [bW0, bO0]   = deal(b0{:});
@@ -136,22 +137,22 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     divOil = op.Div(bOvO);
     oil = oil + divOil;
     
-    % Computation of adsoprtion term
-    %poro = model.rock.poro
-    %ads  = model.getProp(state , 'SurfactantAdsorption');
-    %ads0 = model.getProp(state0, 'SurfactantAdsorption');
-    %ads_term = fluid.rhoRSft.*((1-poro)./poro).*(ads - ads0);
-
-    % Marilena ---- Begin:
+    % % Marilena ---- Begin:
     % gamma_pt = 1.28;
     % vc = 4.6e-6;
     % gamma_d = 16;
     % gamma_e = 30;
-    % bWvc = op.faceUpstr(upcw, bW).*vc;
+    % % bWvc = op.faceUpstr(upcw, bW).*vc;
+    % % csUpstr = op.faceUpstr(upcw,cs);
+    % % cs1Upstr = op.faceUpstr(upcw, cs1);
     % 
-    % term_cs1_simple = gamma_d.*abs(bWvW).*cs;
-    % term_cs2 = gamma_pt.*abs(vW).*cs;
-    % term_cs1_compl = gamma_e.*abs(bWvW-bWvc).*cs1;
+    % veloc_sq = op.sqVeloc(vW);
+    % veloc = veloc_sq.^(1/2);
+    % disp(veloc_sq); disp(veloc); disp(vW);
+    % 
+    % term_cs1_simple = gamma_d.*abs(bW.*veloc).*cs;
+    % term_cs2 = gamma_pt.*abs(bW.*veloc).*cs;
+    % term_cs1_compl = gamma_e.*abs(bW.*(veloc-vc)).*cs1;
     % 
     % if vW <= vc
     %     RHS_cs1 = term_cs1_simple;
@@ -165,60 +166,68 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     % vSft   = op.faceUpstr(upcw, cs).*vW;
     % bWvSft = op.faceUpstr(upcw, bW).*vSft;
     % D = 5.6e-8;
+    % pvbWsWD= op.faceUpstr(upcw, pv.*bW.*sW.*D);
+    % pvbWsWDcs = pvbWsWD.*op.Grad(cs);
     % 
-    % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    % divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs));
+    % surfactant = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
+    % divSurfactant = op.Div(bWvSft-pvbWsWDcs);
+    % surfactant = surfactant + divSurfactant;
     % 
     % % 2 equations with 2 unknowns i.e., cs and cs1:
-    % eq_1 = surfactant + divSurfactant - RHS;
+    % eq_1 = surfactant - RHS;
     % eq_2 = (1/dt).*(cs1 -cs10) - RHS_cs1;
     % 
     % eq_3 = (1/dt).*(cs2-cs20) - term_cs2;
     % 
-    %  % Marilena ---- END
+    % % Marilena ---- END
 
-    % % Computation of deposition term
-    % % Set parameters
-    % vc = 4.6e-6;
-    % gamma_d = 16;
-    % gamma_e = 30;
-    % bWvc = op.faceUpstr(upcw, bW).*vc;
-    % 
-    % % deposition equation:
-    % if vW <= vc
-    %     deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(bWvW).*cs); %error using .*
-    % else
-    %     deposition = (1/dt).*(cs1-cs10) - (gamma_d.*abs(bWvW).*cs) + (gamma_e.*abs(bWvW-bWvc).*cs1);
-    % end
-    % 
-    % % Computation of entrapment term
-    % % Set Parameters
-    % gamma_pt = 1.28;
-    % 
-    % % entrapment equation
-    % entrapment = (1/dt).*(cs2-cs20) - (gamma_pt.*abs(vW).*cs);
-    % 
-    % % Conservation of surfactant in water:
+    % EOR EQUATIONS ---------------------------------------------------------------
+    % Set parameters
+    vc = 4.6e-6; % critical velocity for the water phase
+    gamma_d = 16; % rate coefficients for surface retention of the nanoparticles in the water phase
+    gamma_e = 30; % rate coefficients for entrainment of the nanoparticles in the water phase
+    gamma_pt = 1.28; % pore throat blocking constant
+    veloc_sq = op.sqVeloc(vW);
+    veloc = veloc_sq.^(1/2);
+
+    % RHS of equations:
+    if vW <= vc
+        derDeposition = gamma_d.*abs(bW.*veloc).*cs;
+        derEntrapment = gamma_pt.*abs(bW.*veloc).*cs;
+    else
+        derDeposition = (gamma_d.*abs(bW.*veloc).*cs) + (gamma_e.*abs(bW.*(veloc-vc)).*cs1);
+        derEntrapment = gamma_pt.*abs(bW.*veloc).*cs;
+    end
+    R = derDeposition + derEntrapment; 
+
+    % Deposition equation:
+    deposition = (1/dt).*(cs1 - cs2) - derDeposition;
+
+    % entrapment equation
+    entrapment = (1/dt).*(cs2 - cs20) - derEntrapment;
+
+    % Conservation of surfactant in water:
     vSft   = op.faceUpstr(upcw, cs).*vW;
     bWvSft = op.faceUpstr(upcw, bW).*vSft;
-    D = 5.6e-8*ones(G.cells.num, 1);
-    D = initVariablesADI(D);
-    
-    % res1 = op.Grad(cs);
-    % Sft = op.faceUpstr(upcw, cs);
-    % res2 = op.Grad (Sft);
-    % bWSft = op.faceUpstr(upcw, bW).*op.Grad(Sft);
-    % pvbWSft = op.faceUpstr(upcw, pv).*bWSft;
-    % pvDbWdSft = op.faceUpstr(upcw, D).*pvbWSft;
+    D = 5.6e-8; % *ones(G.cells.num, 1);
+    % D = initVariablesADI(D);
+    pvbWsWD= op.faceUpstr(upcw, pv.*bW.*sW.*D);
+    pvbWsWDcs = pvbWsWD.*op.Grad(cs);
 
+    surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
+    divSurfactant = op.Div(bWvSft-pvbWsWDcs); %Not sure about porosity and faceUpstr
+    surfactant = surfactant + divSurfactant - R;
+    %-------------------------------------------------------------------------------------------
+    % Computation of adsoprtion term
+    %poro = model.rock.poro
+    %ads  = model.getProp(state , 'SurfactantAdsorption');
+    %ads0 = model.getProp(state0, 'SurfactantAdsorption');
+    %ads_term = fluid.rhoRSft.*((1-poro)./poro).*(ads - ads0);
+    %
     % surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0); % + (op.pv/dt).*ads_term;
     % divSurfactant = op.Div(bWvSft);
     % surfactant = surfactant + divSurfactant;
-    surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    divSurfactant = op.Div(bWvSft-pv.*bW.*sW.*D.*op.Grad(cs)); %Not sure about porosity and faceUpstr
-    fprintf('after: %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n \n', size(D), size(bW),size(sW),size(pv), size(cs),size(bW0),size(sW0),size(pv0), size(cs0), size(dt))
-   
-    surfactant = surfactant + divSurfactant; % - (deposition + entrapment);
+    % fprintf('after: %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n %f\n \n', size(D), size(bW),size(sW),size(pv), size(cs),size(bW0),size(sW0),size(pv0), size(cs0), size(dt))
 
     if ~opt.resOnly
         epsilon = 1.e-8;
@@ -235,20 +244,20 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
         surfactant(bad) = cs(bad);
     end
 
-    % Marilena ---- Begin:
-
-    % eqs      = {water   , oil   , eq1, eq2, eq3};
+    % % Marilena ---- Begin:
+    % 
+    % eqs      = {water   , oil   , eq_1, eq_2, eq_3};
     % names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
     % types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
-    % components = {cs};
+    % components = {cs, cs1, cs2};
+    % 
+    % % Marilena ---- END
 
-    % Marilena ---- END
-
-    eqs      = {water   , oil   , surfactant};
-    names    = {'water' , 'oil' , 'surfactant'};
-    types    = {'cell'  , 'cell', 'cell'};
-    components = {cs};
-    
+    eqs      = {water   , oil   , surfactant, deposition, entrapment};
+    names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
+    types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
+    components = {cs, cs1, cs2};
+     
     [eqs, state] = addBoundaryConditionsAndSources(model, eqs, names, types, ...
                                                    state, pressures, sat, mob, ...
                                                    rho, {}, components, ...

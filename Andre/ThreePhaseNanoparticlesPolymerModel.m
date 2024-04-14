@@ -80,8 +80,8 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 end
 
                 % Operators used to compute capillary number
- %               model.operators.veloc = computeVelocTPFA(G, model.operators.internalConn);
- %               model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
+               model.operators.veloc = computeVelocTPFA(G, model.operators.internalConn);
+               model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
             end
         end
 
@@ -94,10 +94,10 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
         function model = validateModel(model, varargin)
             model = validateModel@ThreePhaseBlackOilModel(model, varargin{:});
             if model.surfactant && ~isfield(model.operators, 'veloc')
-                % Operators used to compute capillary number
+                % Operators used to compute the approximated value of the square of the velocity at the cell center, (or capillary number)
                 G = model.G;
-%                model.operators.veloc = computeVelocTPFA(G, model.operators.internalConn);
-%                model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
+               model.operators.veloc = computeVelocTPFA(G, model.operators.internalConn);
+               model.operators.sqVeloc = computeSqVelocTPFA(G, model.operators.internalConn);
             end
         end
         
