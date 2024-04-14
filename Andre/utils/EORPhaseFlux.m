@@ -21,8 +21,10 @@ classdef EORPhaseFlux < StateFunction
             for i = 1:nph
                 if i == 1
                     v{i} = -mob{i}.*kgrad{i}.*(mob{i+1}/(mob{i}+mob{i+1})); %kgrad may be wrong
+                elseif i == 2
+                    v{i} = -v{i-1};
                 else
-                    v{i} = -mob{i}.*kgrad{i}; 
+                    v{i} = -mob{i}.*kgrad{i};
                 end
 
 
