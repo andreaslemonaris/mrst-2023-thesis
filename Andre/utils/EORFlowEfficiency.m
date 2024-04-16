@@ -8,7 +8,7 @@ classdef EORFlowEfficiency < StateFunction
         function gp = EORFlowEfficiency(model, varargin)
             gp@StateFunction(model, varargin{:});
             gp = gp.dependsOn({'surfactantentrapment'}, 'state');
-            assert(isfield(model.water && model.surfactant), 'surfactant is missing'); %check mechanism
+            % assert(isfield(model.surfactant), 'surfactant is missing'); %check mechanism
             gp.gamma_f = 0.01;
         end
         function f = evaluateOnDomain(prop, model, state) %#ok

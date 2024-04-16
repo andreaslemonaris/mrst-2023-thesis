@@ -194,27 +194,27 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 % the black-oil value by using a multiplier approach, where we have
                 % one multiplier for each EOR effect.
                 pp = pp.setStateFunction('Viscosity', BlackOilViscosity(model, pvtreg));
-%                pp = pp.setStateFunction('BaseViscosity', BlackOilViscosity(model)); 
+                % pp = pp.setStateFunction('BaseViscosity', BlackOilViscosity(model)); 
 
-%                kr_base = fp.getStateFunction('RelativePermeability');
+                % kr_base = fp.getStateFunction('RelativePermeability');
                 fp = fp.setStateFunction('RelativePermeability', BaseRelativePermeability(model));
-%               fp = fp.setStateFunction('BaseRelativePermeability', kr_base);
+                % fp = fp.setStateFunction('BaseRelativePermeability', kr_base);
 
                 % The statefunction ViscosityMultipliers and RelPermMultipliers are containers
                 % for the Viscosity and Relative Permeability multpliers.  Each
                 % multiplier is set up as a property (for example
                 % 'PolymerEffViscMult' below) and added to the container.
-%                viscmult = PhaseMultipliers(model);
-%                viscmult.label = 'M_\mu';
+                % viscmult = PhaseMultipliers(model);
+                % viscmult.label = 'M_\mu';
 
                 % TODO: we need to find an easier way to handle the viscosity multiplication between different component
                 % hopefully, we only handle once.
-%                pviscmult = PhaseMultipliers(model);
-%                pviscmult.label = 'M_{\mu_p}';
-
-%                relpermult = PhaseMultipliers(model);
-%                relpermult.label = 'M_{kr}';
-%                relpermult.operator = @rdivide; % The relperm multipliers are divided
+                % pviscmult = PhaseMultipliers(model);
+                % pviscmult.label = 'M_{\mu_p}';
+                % 
+                % relpermult = PhaseMultipliers(model);
+                % relpermult.label = 'M_{kr}';
+                % relpermult.operator = @rdivide; % The relperm multipliers are divided
 
                 if model.polymer
 
@@ -254,24 +254,34 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 end
 
                 if model.surfactant
-%                    fp = fp.setStateFunction('CapillaryNumber', CapillaryNumber(model));
-%                    fp = fp.setStateFunction('SurfactantAdsorption', SurfactantAdsorption(model, satreg));
-                    % The EOR relative permeability is set up as the
-                    % SurfactantRelativePermeability combined with multipliers.
-%                    fp = fp.setStateFunction('BaseRelativePermeability', SurfactantRelativePermeability(model, satreg, surfreg));
-                    fp.CapillaryPressure = BlackOilCapillaryPressure(model, satreg);
+                    % fp = fp.setStateFunction('CapillaryNumber', CapillaryNumber(model));
+                    % fp = fp.setStateFunction('SurfactantAdsorption', SurfactantAdsorption(model, satreg));
+                    % % The EOR relative permeability is set up as the
+                    % % SurfactantRelativePermeability combined with multipliers.
+                    % fp = fp.setStateFunction('BaseRelativePermeability', SurfactantRelativePermeability(model, satreg, surfreg));
+                    % fp.CapillaryPressure = BlackOilCapillaryPressure(model, satreg);
 
-                    % We set up the surfactant viscosity multiplier
-%                    smult = 'SurfactantViscMultiplier';
-%                   pp = pp.setStateFunction(smult, SurfactantViscMultiplier(model, pvtreg));
-%                    viscmult = viscmult.addMultiplier(model, smult, 'W');
-%                    pviscmult = pviscmult.addMultiplier(model, smult, 'W');
+                    % Insert State Functions
+                    fp = fp.setStateFunction('CapillaryPressure', BlackOilCapillaryPressure(model, satreg));
+                    pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
+                    pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
+                    pp = pp.setStateFunction('EORPoreVolume',EORPoreVolume(model,pvtreg));
+
+                    % Copy Flow Properties to PVT Properties Groupings
+                    pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
+                    pp = pp.setStateFunction('PVTBaseRelativePermeability', PVTBaseRelativePermeability(model));
+
+                    % % We set up the surfactant viscosity multiplier
+                    % smult = 'SurfactantViscMultiplier';
+                    % pp = pp.setStateFunction(smult, SurfactantViscMultiplier(model, pvtreg));
+                    % viscmult = viscmult.addMultiplier(model, smult, 'W');
+                    % pviscmult = pviscmult.addMultiplier(model, smult, 'W');
                 end
 
-%                pp = pp.setStateFunction('ViscosityMultipliers', viscmult);
-                % TODO: BAD NAME!
-%                pp = pp.setStateFunction('PolyViscMult', pviscmult);
-%                fp = fp.setStateFunction('RelativePermeabilityMultipliers', relpermult);
+                % pp = pp.setStateFunction('ViscosityMultipliers', viscmult);
+                % % TODO: BAD NAME!
+                % pp = pp.setStateFunction('PolyViscMult', pviscmult);
+                % fp = fp.setStateFunction('RelativePermeabilityMultipliers', relpermult);
 
                 model.FlowPropertyFunctions = fp;
                 model.PVTPropertyFunctions  = pp;

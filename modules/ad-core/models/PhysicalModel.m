@@ -535,7 +535,7 @@ methods
             for i = 1:numel(propfn)
                 p = propfn{i};
                 struct_name = p.getStateFunctionContainerName();
-                if isfield(state, struct_name)
+                if isfield(state, struct_name) % && ~isfield(state, 'FlowProps') added by Andre
                     state = rmfield(state, struct_name);
                 end
             end
@@ -751,7 +751,7 @@ methods
                 [dx, stabilizeReport] = nonlinsolver.stabilizeNewtonIncrements(model, problem, dx);
                 % Remove AD from state, and remove property containers to avoid
                 % caching issues in update function
-                state = model.reduceState(state, true);
+                state = model.reduceState(state, true); % DEN MEIWNW TO flow
                 is_struggling = nonlinsolver.alwaysUseStabilization || nonlinsolver.convergenceIssues;
                 if is_struggling && nonlinsolver.useLinesearch
                     [state, updateReport, stabilizeReport.linesearch] = nonlinsolver.applyLinesearch(model, state0, state, problem, dx, drivingForces, varargin{:});

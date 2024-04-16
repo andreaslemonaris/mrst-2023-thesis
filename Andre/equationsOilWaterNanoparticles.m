@@ -104,8 +104,8 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     state = model.initStateFunctionContainers(state);
     
     % EQUATIONS ---------------------------------------------------------------
-    [b, pv]               = model.getProps(state, 'ShrinkageFactors','PoreVolume');
-    [b0, pv0]             = model.getProps(state0, 'ShrinkageFactors', 'PoreVolume');
+    [b, pv]               = model.getProps(state, 'ShrinkageFactors','EORPoreVolume');
+    [b0, pv0]             = model.getProps(state0, 'ShrinkageFactors', 'EORPoreVolume');
     [phaseFlux, flags]    = model.getProps(state, 'PhaseFlux', 'PhaseUpwindFlag');
     [pressures, mob, rho] = model.getProps(state, 'PhasePressures', 'Mobility', 'Density');
     
@@ -137,7 +137,7 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     divOil = op.Div(bOvO);
     oil = oil + divOil;
     
-    % % Marilena ---- Begin:
+    % % Draft ---- Begin:
     % gamma_pt = 1.28;
     % vc = 4.6e-6;
     % gamma_d = 16;
@@ -179,7 +179,7 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     % 
     % eq_3 = (1/dt).*(cs2-cs20) - term_cs2;
     % 
-    % % Marilena ---- END
+    % % Draft ---- END
 
     % EOR EQUATIONS ---------------------------------------------------------------
     % Set parameters
@@ -244,14 +244,14 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
         surfactant(bad) = cs(bad);
     end
 
-    % % Marilena ---- Begin:
+    % % Draft ---- Begin:
     % 
     % eqs      = {water   , oil   , eq_1, eq_2, eq_3};
     % names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
     % types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
     % components = {cs, cs1, cs2};
     % 
-    % % Marilena ---- END
+    % % Draft ---- END
 
     eqs      = {water   , oil   , surfactant, deposition, entrapment};
     names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
