@@ -267,9 +267,9 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                     pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
                     pp = pp.setStateFunction('EORPoreVolume',EORPoreVolume(model,pvtreg));
 
-                    % Copy Flow Properties to PVT Properties Groupings
-                    pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
-                    pp = pp.setStateFunction('PVTBaseRelativePermeability', PVTBaseRelativePermeability(model));
+                    % % Copy Flow Properties to PVT Properties Groupings
+                    % pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
+                    % pp = pp.setStateFunction('PVTBaseRelativePermeability', PVTBaseRelativePermeability(model));
 
                     % % We set up the surfactant viscosity multiplier
                     % smult = 'SurfactantViscMultiplier';
