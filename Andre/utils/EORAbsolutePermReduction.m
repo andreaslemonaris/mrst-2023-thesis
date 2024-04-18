@@ -14,7 +14,7 @@ classdef EORAbsolutePermReduction < StateFunction
     methods
         function gp = EORAbsolutePermReduction(model, varargin)
             gp@StateFunction(model, varargin{:});
-            gp = gp.dependsOn({'EORPoreVolume', 'FlowEfficiencyFactor'});
+            gp = gp.dependsOn({'PoreVolume', 'FlowEfficiencyFactor'});
             gp = gp.dependsOn({'surfactantdeposition'}, 'state');
             gp = gp.dependsOn({'surfactantentrapment'}, 'state');
             % assert(isfield(model.water && model.surfactant), 'surfactant is missing'); %check mechanism

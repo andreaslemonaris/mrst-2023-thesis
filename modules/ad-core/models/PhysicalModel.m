@@ -530,16 +530,16 @@ methods
     function state = reduceState(model, state, removeContainers)
         % Reduce state to doubles, and optionally remove the property
         % containers to reduce storage space
-        if nargin < 3 || removeContainers
-            propfn = model.getStateFunctionGroupings();
-            for i = 1:numel(propfn)
-                p = propfn{i};
-                struct_name = p.getStateFunctionContainerName();
-                if isfield(state, struct_name) % && ~isfield(state, 'FlowProps') added by Andre
-                    state = rmfield(state, struct_name);
-                end
-            end
-        end
+        % if nargin < 3 || removeContainers
+        %     propfn = model.getStateFunctionGroupings();
+        %     for i = 1:numel(propfn)
+        %         p = propfn{i};
+        %         struct_name = p.getStateFunctionContainerName();
+        %         if isfield(state, struct_name) % && ~isfield(state, 'FlowProps') added by Andre
+        %             state = rmfield(state, struct_name);
+        %         end
+        %     end
+        % end %TODO
         state = value(state);
         if isfield(state, 'primaryVariables')
             state = rmfield(state, 'primaryVariables');
@@ -606,7 +606,7 @@ methods
                 else
                     % We did not keep any properties from this group.
                     % Remove the struct alltogether.
-                    state = rmfield(state, struct_name);
+                    % state = rmfield(state, struct_name);  TODO
                 end
             end
         end

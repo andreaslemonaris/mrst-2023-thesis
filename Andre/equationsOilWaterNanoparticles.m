@@ -64,16 +64,14 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     W     = drivingForces.W;
 
     % Properties at current timestep
-    [p, sW, cs, csmax, cs1, cs2] = model.getProps(state, 'pressure', 'water', ...
+    [p, sW, cs, cs1, cs2] = model.getProps(state, 'pressure', 'water', ...
                                                       'surfactant', ...
-                                                      'surfactantmax', ...
                                                       'surfactantdeposition', ...
                                                       'surfactantentrapment');
 
     % Properties at previous timestep
-    [p0, sW0, cs0, csmax0, cs10, cs20] = model.getProps(state0, 'pressure', 'water', ...
+    [p0, sW0, cs0, cs10, cs20] = model.getProps(state0, 'pressure', 'water', ...
                                                             'surfactant', ...
-                                                            'surfactantmax', ...
                                                             'surfactantdeposition', ...
                                                             'surfactantentrapment');
 
@@ -104,8 +102,8 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     state = model.initStateFunctionContainers(state);
     
     % EQUATIONS ---------------------------------------------------------------
-    [b, pv]               = model.getProps(state, 'ShrinkageFactors','EORPoreVolume');
-    [b0, pv0]             = model.getProps(state0, 'ShrinkageFactors', 'EORPoreVolume');
+    [b, pv]               = model.getProps(state, 'ShrinkageFactors','BasePoreVolume');
+    [b0, pv0]             = model.getProps(state0, 'ShrinkageFactors', 'BasePoreVolume');
     [phaseFlux, flags]    = model.getProps(state, 'PhaseFlux', 'PhaseUpwindFlag');
     [pressures, mob, rho] = model.getProps(state, 'PhasePressures', 'Mobility', 'Density');
     
@@ -201,7 +199,7 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     R = derDeposition + derEntrapment; 
 
     % Deposition equation:
-    deposition = (1/dt).*(cs1 - cs2) - derDeposition;
+    deposition = (1/dt).*(cs1 - cs10) - derDeposition;
 
     % entrapment equation
     entrapment = (1/dt).*(cs2 - cs20) - derEntrapment;

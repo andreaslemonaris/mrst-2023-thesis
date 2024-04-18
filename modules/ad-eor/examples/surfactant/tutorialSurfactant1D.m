@@ -63,11 +63,11 @@ model = OilWaterSurfactantModel(G, rock, fluid, ...
                                                   'extraStateOutput', true);
 
 % inspectFluidModel(model,'field','Densities');
-% model = model.setupStateFunctionGroupings();
+model = model.setupStateFunctionGroupings();
 % disp(model);
-% disp(model.PVTPropertyFunctions);
-% disp(model.FlowPropertyFunctions);
-% disp(model.FlowDiscretization);
+disp(model.PVTPropertyFunctions);
+disp(model.FlowPropertyFunctions);
+disp(model.FlowDiscretization);
 % plotStateFunctionGroupings(model.PVTPropertyFunctions);
 % plotStateFunctionGroupings(model.FlowPropertyFunctions);
 % plotStateFunctionGroupings(model.FlowDiscretization);
@@ -95,7 +95,7 @@ scheduleOW.control(2).W(2).cs = 0;
                                                   scheduleOW);
 
 figure()
-plotToolbar(G, statesSurfactant, 'startplayback', true, 'plot1d', true, 'field', 's:1');
+plotToolbar(G, statesSurfactant, 'startplayback', true, 'plot1d', true, 'field', 's:1', 'view', [90, 0]);
 
 plotWellSols({wellSolsSurfactant, wellSolsOW}, ...
              cumsum(schedule.step.val), ...

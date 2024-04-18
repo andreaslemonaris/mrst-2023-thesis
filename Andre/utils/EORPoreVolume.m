@@ -7,15 +7,16 @@ classdef EORPoreVolume < PoreVolume
     methods
         function gp = EORPoreVolume(model, varargin)
             gp@PoreVolume(model, varargin{:});
-            gp = gp.dependsOn({'pressure'}, 'state');
+            gp = gp.dependsOn({'BasePoreVolume'});
             gp = gp.dependsOn({'surfactantdeposition'}, 'state');
             gp = gp.dependsOn({'surfactantentrapment'}, 'state');
-            % assert(isfield(model.water && model.surfactant), 'surfactant is missing'); %check mechanism
+            assert(model.water && model.surfactant, 'surfactant/water is missing'); %check mechanism
             % assert(isfield(model.fluid, 'pvMultR'), 'pvMultR missing from fluid.');
         end
         function pv = evaluateOnDomain(prop, model, state)
             % Get effective pore-volume, accounting for rock-compressibility
-            pv = evaluateOnDomain@PoreVolume(prop, model, state);
+            % pv = evaluateOnDomain@PoreVolume(prop, model, state);
+            pv = prop.getEvaluatedDependencies(state, 'BasePoreVolume');
             c1 = model.getProps(state, 'surfactantdeposition');
             c2 = model.getProps(state, 'surfactantentrapment');
 

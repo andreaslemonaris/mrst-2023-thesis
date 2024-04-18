@@ -40,7 +40,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             if isempty(model.inputdata)
                 % We guess what's present
                 model.polymer = isfield(model.fluid, 'cpmax');
-                model.surfactant = isfield(model.fluid, 'csmax');
+                model.surfactant = isfield(model.fluid, 'cs');
             else
                 % We have a deck that explicitly enables features
                 runspec = model.inputdata.RUNSPEC;
@@ -165,12 +165,12 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             end
             if model.surfactant
                 cs    = model.getProp(state, 'surfactant');
-                csmax = model.getProp(state, 'surfactantmax');
+                % csmax = model.getProp(state, 'surfactantmax');
                 cs1   = model.getProp(state, 'surfactantdeposition');
                 cs2   = model.getProp(state, 'surfactantentrapment');
-                state = model.setProp(state, 'surfactantmax', max(csmax, cs));
-                state = model.setProp(state, 'surfactantdeposition', max(cs1, 0));%Note1
-                state = model.setProp(state, 'surfactantentrapment', max(cs2, 0));%Note2
+                state = model.setProp(state, 'surfactantmax', cs); %max(csmax, cs)
+                state = model.setProp(state, 'surfactantdeposition', cs1);%Note1
+                state = model.setProp(state, 'surfactantentrapment', cs2);%Note2
             end
         end
 
@@ -265,7 +265,8 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                     fp = fp.setStateFunction('CapillaryPressure', BlackOilCapillaryPressure(model, satreg));
                     pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
                     pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
-                    pp = pp.setStateFunction('EORPoreVolume',EORPoreVolume(model,pvtreg));
+                    pp = pp.setStateFunction('BasePoreVolume', PoreVolume(model,pvtreg));
+                    pp = pp.setStateFunction('PoreVolume', EORPoreVolume(model,pvtreg));
 
                     % % Copy Flow Properties to PVT Properties Groupings
                     % pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
