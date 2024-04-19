@@ -5,7 +5,7 @@ classdef OilWaterNanoparticlesModel < ThreePhaseNanoparticlesPolymerModel
     %   model = OilWaterNanoparticleModel(G, rock, fluid, varargin)
     %
     % DESCRIPTION: 
-    %   Fully implicit model for an oil water system with surfactant. All
+    %   Fully implicit model for an oil water system with nanoparticles. All
     %   the equations are solved implicitly..
     %
     % PARAMETERS:
@@ -19,7 +19,7 @@ classdef OilWaterNanoparticlesModel < ThreePhaseNanoparticlesPolymerModel
     %
     % EXAMPLE:
     %
-    % SEE ALSO: equationsOilWaterSurfactant,
+    % SEE ALSO: equationsOilWaterNanoparticles,
     %
 
     properties
