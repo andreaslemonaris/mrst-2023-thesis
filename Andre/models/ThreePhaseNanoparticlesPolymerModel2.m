@@ -1,4 +1,4 @@
-classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
+classdef ThreePhaseNanoparticlesPolymerModel2 < ThreePhaseBlackOilModel
     % Three-phase black-oil model with support for nanoparticles and polymer injection
     %
     % SYNOPSIS:
@@ -34,7 +34,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
     end
 
     methods
-        function model = ThreePhaseNanoparticlesPolymerModel(G, rock, fluid, varargin)
+        function model = ThreePhaseNanoparticlesPolymerModel2(G, rock, fluid, varargin)
             model = model@ThreePhaseBlackOilModel(G, rock, fluid, varargin{:});
 
             if isempty(model.inputdata)
@@ -193,7 +193,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 % We set up EOR viscosities and relative permeabilities. They are computed from
                 % the black-oil value by using a multiplier approach, where we have
                 % one multiplier for each EOR effect.
-                pp = pp.setStateFunction('Viscosity', BlackOilViscosity(model, pvtreg));
+                pp = pp.setStateFunction('Viscosity', Viscosity(model, pvtreg));
                 % pp = pp.setStateFunction('BaseViscosity', BlackOilViscosity(model)); 
 
                 % kr_base = fp.getStateFunction('RelativePermeability');
@@ -263,10 +263,13 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
 
                     % Insert State Functions
                     fp = fp.setStateFunction('CapillaryPressure', BlackOilCapillaryPressure(model, satreg));
-                    % pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
-                    % pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
+                    pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
+                    pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
                     pp = pp.setStateFunction('BasePoreVolume', PoreVolume(model,pvtreg));
                     pp = pp.setStateFunction('PoreVolume', EORPoreVolume(model,pvtreg));
+
+                    fd = fd.setStateFunction('PhaseFlux', EORPhaseFlux(model));
+                    fd = fd.setStateFunction('PermeabilityPotentialGradient', EORPermeabilityPotentialGradient(model));
 
                     % % Copy Flow Properties to PVT Properties Groupings
                     % pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
@@ -411,6 +414,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 qW = src.phaseMass{1}./model.fluid.rhoWS;
                 isInj = qW > 0;
                 qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
+
               otherwise
                 error(['Unknown component ''', cname, '''. BC not implemented.']);
             end

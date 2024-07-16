@@ -13,10 +13,10 @@ classdef EORFlowEfficiency < StateFunction
         end
         function f = evaluateOnDomain(prop, model, state) %#ok
             % Get flow efficiency
-            c2 = model.getProps(state, 'surfactantentrapment');
+            c2 = model.getProps(state, 'nanoparticlesentrapment');
             gammaf = prop.gamma_f;
 
-            f = 1 - gammaf.*c2;        
+            f = 1 - gammaf.*c2;      
         end
     end
 end

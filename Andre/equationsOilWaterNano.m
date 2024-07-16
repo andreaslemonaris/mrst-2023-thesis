@@ -1,4 +1,4 @@
-  function [problem, state] = equationsOilWaterNanoparticles(state0, state, model, ...
+  function [problem, state] = equationsOilWaterNano(state0, state, model, ...
                                                       dt, drivingForces, ...
                                                       varargin)
 %
@@ -65,15 +65,15 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
 
     % Properties at current timestep
     [p, sW, cs, cs1, cs2] = model.getProps(state, 'pressure', 'water', ...
-                                                      'surfactant', ...
-                                                      'surfactantdeposition', ...
-                                                      'surfactantentrapment');
+                                                      'nanoparticles', ...
+                                                      'nanoparticlesdeposition', ...
+                                                      'nanoparticlesentrapment');
 
     % Properties at previous timestep
     [p0, sW0, cs0, cs10, cs20] = model.getProps(state0, 'pressure', 'water', ...
-                                                            'surfactant', ...
-                                                            'surfactantdeposition', ...
-                                                            'surfactantentrapment');
+                                                            'nanoparticles', ...
+                                                            'nanoparticlesdeposition', ...
+                                                            'nanoparticlesentrapment');
 
     % Initialize independent variables.
     if ~opt.resOnly
@@ -88,7 +88,7 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
 
     % We will solve for pressure, water saturation (oil saturation follows via
     % the definition of saturations) and surfactant concentration
-    primaryVars = {'pressure', 'sW', 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
+    primaryVars = {'pressure', 'sW', 'nanoparticles', 'nanoparticlesdeposition', 'nanoparticlesentrapment'};
 
     sO  = 1 - sW;
     sO0 = 1 - sW0;
@@ -96,8 +96,8 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     sat0 = {sW0, sO0};
     
     % Update state with AD-variables
-    state = model.setProps(state  , {'s', 'pressure', 'surfactant', 'surfactantdeposition', 'surfactantentrapment'}, {sat , p , cs, cs1, cs2});
-    state0 = model.setProps(state0, {'s', 'pressure', 'surfactant', 'surfactantdeposition', 'surfactantentrapment'}, {sat0, p0, cs0, cs1, cs2});
+    state = model.setProps(state  , {'s', 'pressure', 'nanoparticles', 'nanoparticlesdeposition', 'nanoparticlesentrapment'}, {sat , p , cs, cs1, cs2});
+    state0 = model.setProps(state0, {'s', 'pressure', 'nanoparticles', 'nanoparticlesdeposition', 'nanoparticlesentrapment'}, {sat0, p0, cs0, cs1, cs2});
     % Set up properties
     state = model.initStateFunctionContainers(state);
     
@@ -203,10 +203,10 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     R = derDeposition + derEntrapment; 
 
     % Deposition equation:
-    deposition = (1/dt).*(cs1 - cs10) - derDeposition;
+    nanoparticlesdeposition = (1/dt).*(cs1 - cs10) - derDeposition;
 
     % entrapment equation
-    entrapment = (1/dt).*(cs2 - cs20) - derEntrapment;
+    nanoparticlesentrapment = (1/dt).*(cs2 - cs20) - derEntrapment;
 
     % Conservation of surfactant in water:
     vSft   = op.faceUpstr(upcw, cs).*vW;
@@ -216,9 +216,9 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
     pvbWsWD= op.faceUpstr(upcw, pv.*bW.*sW.*D);
     pvbWsWDcs = pvbWsWD.*op.Grad(cs);
 
-    surfactant    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
-    divSurfactant = op.Div(bWvSft-pvbWsWDcs); %Not sure about porosity and faceUpstr
-    surfactant = surfactant + divSurfactant - R;
+    nanoparticles    = (1/dt).*(pv.*bW.*sW.*cs - pv0.*bW0.*sW0.*cs0);
+    divNanoparticles = op.Div(bWvSft-pvbWsWDcs); %Not sure about porosity and faceUpstr
+    nanoparticles = nanoparticles + divNanoparticles - R;
     %-------------------------------------------------------------------------------------------
     % Computation of adsoprtion term
     %poro = model.rock.poro
@@ -235,30 +235,38 @@ along with MRST.  If not, see <http://www.gnu.org/licenses/>.
         epsilon = 1.e-8;
         % the first way is based on the diagonal values of the resulting
         % Jacobian matrix
-        eps = sqrt(epsilon)*mean(abs(diag(surfactant.jac{3})));
+        eps = sqrt(epsilon)*mean(abs(diag(nanoparticles.jac{3})));
+        eps1 = sqrt(epsilon)*mean(abs(diag(nanoparticlesdeposition.jac{3})));
+        eps2 = sqrt(epsilon)*mean(abs(diag(nanoparticlesentrapment.jac{3})));
         % sometimes there is no water in the whole domain
         if (eps == 0.)
             eps = epsilon;
+            eps1 = epsilon;
+            eps2 = epsilon;
         end
         % bad marks the cells prolematic in evaluating Jacobian
-        bad = abs(diag(surfactant.jac{3})) < eps;
+        bad = abs(diag(nanoparticles.jac{3})) < eps;
+        bad1 = abs(diag(nanoparticlesdeposition.jac{3})) < eps1;
+        bad2 = abs(diag(nanoparticlesentrapment.jac{3})) < eps2;
         % the other way is to choose based on the water saturation
-        surfactant(bad) = cs(bad);
+        nanoparticles(bad) = cs(bad);
+        nanoparticlesdeposition(bad1) = cs1(bad1);
+        nanoparticlesentrapment(bad2) = cs2(bad2);
     end
 
     % % Draft ---- Begin:
     % 
     % eqs      = {water   , oil   , eq_1, eq_2, eq_3};
-    % names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
+    % names    = {'water' , 'oil' , 'nanoparticles', 'nanoparticlesdeposition', 'nanoparticlesentrapment'};
     % types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
     % components = {cs, cs1, cs2};
     % 
     % % Draft ---- END
 
-    eqs      = {water   , oil   , surfactant, deposition, entrapment};
-    names    = {'water' , 'oil' , 'surfactant', 'surfactantdeposition', 'surfactantentrapment'};
+    eqs      = {water   , oil   , nanoparticles, nanoparticlesdeposition, nanoparticlesentrapment};
+    names    = {'water' , 'oil' , 'nanoparticles', 'nanoparticlesdeposition', 'nanoparticlesentrapment'};
     types    = {'cell'  , 'cell', 'cell', 'cell', 'cell'};
-    components = {cs, cs1, cs2};
+    components = {cs};
      
     [eqs, state] = addBoundaryConditionsAndSources(model, eqs, names, types, ...
                                                    state, pressures, sat, mob, ...

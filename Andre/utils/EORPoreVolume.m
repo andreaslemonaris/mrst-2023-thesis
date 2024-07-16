@@ -10,15 +10,15 @@ classdef EORPoreVolume < PoreVolume
             gp = gp.dependsOn({'BasePoreVolume'});
             gp = gp.dependsOn({'surfactantdeposition'}, 'state');
             gp = gp.dependsOn({'surfactantentrapment'}, 'state');
-            assert(model.water && model.surfactant, 'surfactant/water is missing'); %check mechanism
+            assert(model.water && model.nanoparticles, 'nanoparticles/water is missing'); %check mechanism
             % assert(isfield(model.fluid, 'pvMultR'), 'pvMultR missing from fluid.');
         end
         function pv = evaluateOnDomain(prop, model, state)
             % Get effective pore-volume, accounting for rock-compressibility
             % pv = evaluateOnDomain@PoreVolume(prop, model, state);
             pv = prop.getEvaluatedDependencies(state, 'BasePoreVolume');
-            c1 = model.getProps(state, 'surfactantdeposition');
-            c2 = model.getProps(state, 'surfactantentrapment');
+            c1 = model.getProps(state, 'nanoparticlesdeposition');
+            c2 = model.getProps(state, 'nanoparticlesentrapment');
 
  %           p = model.getProp(state, 'pressure');
  %           pvMult = prop.evaluateFluid(model, 'pvMultR', p);

@@ -14,22 +14,27 @@ classdef EORAbsolutePermReduction < StateFunction
     methods
         function gp = EORAbsolutePermReduction(model, varargin)
             gp@StateFunction(model, varargin{:});
-            gp = gp.dependsOn({'PoreVolume', 'FlowEfficiencyFactor'});
+            gp = gp.dependsOn({'PoreVolume', 'FlowEfficiencyFactor', 'BasePoreVolume'});
             gp = gp.dependsOn({'surfactantdeposition'}, 'state');
             gp = gp.dependsOn({'surfactantentrapment'}, 'state');
             % assert(isfield(model.water && model.surfactant), 'surfactant is missing'); %check mechanism
             gp = gp.dependsOn('Transmissibility', 'FlowDiscretization');
             gp.k_f = 0.6;
+            gp.exponent_l = 3;
+            gp.label = '\perm_\alpha';
         end
 
         function permRed = evaluateOnDomain(prop, model, state)
-            [pv, f] = prop.getEvaluatedDependencies(state, 'EORPoreVolume', 'EORFlowEfficiency');
+            [pv, f] = prop.getEvaluatedDependencies(state, 'PoreVolume', 'FlowEfficiencyFactor');
             T = prop.getEvaluatedExternals(model, state, 'Transmissibility');
             kf = prop.k_f;
             l = prop.exponent_l;
-            poro = model.rock.poro;
-            
-            permRed = T.*((1-f).*kf + f.*(pv./poro))^l;
+            poro = prop.getEvaluatedDependencies(state, 'BasePoreVolume');
+            s = model.operators;
+            % poro = model.rock.poro;
+            red = ((1-f).*kf + f.*(pv./poro)).^l;
+            red = s.faceAvg(red);
+            permRed = T.*red;
         end
     end
 end

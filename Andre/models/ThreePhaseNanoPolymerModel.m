@@ -1,4 +1,4 @@
-classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
+classdef ThreePhaseNanoPolymerModel < ThreePhaseBlackOilModel
     % Three-phase black-oil model with support for nanoparticles and polymer injection
     %
     % SYNOPSIS:
@@ -18,13 +18,13 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
     %
     % EXAMPLE:
     %
-    % SEE ALSO:  equationsThreePhaseBlackOilPolymer, OilWaterPolymerModel
+    % SEE ALSO: OilWaterNanoModel
     %
 
     properties
-        % Surfactant and Polymer present
+        % Nanoparticles and Polymer present
         polymer
-        surfactant
+        nanoparticles
         % Using PLYSHEAR shear model based on water velocity
         usingShear
 	    % Using PLYSHLOG shear model based on water velocity
@@ -34,19 +34,19 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
     end
 
     methods
-        function model = ThreePhaseNanoparticlesPolymerModel(G, rock, fluid, varargin)
+        function model = ThreePhaseNanoPolymerModel(G, rock, fluid, varargin)
             model = model@ThreePhaseBlackOilModel(G, rock, fluid, varargin{:});
 
             if isempty(model.inputdata)
                 % We guess what's present
                 model.polymer = isfield(model.fluid, 'cpmax');
-                model.surfactant = isfield(model.fluid, 'cs');
+                model.nanoparticles = isfield(model.fluid, 'csmax');
             else
                 % We have a deck that explicitly enables features
                 runspec = model.inputdata.RUNSPEC;
                 check = @(name) isfield(runspec, upper(name)) && runspec.(upper(name));
                 model.polymer    = check('POLYMER');
-                model.surfactant = check('SURFACT');
+                model.nanoparticles = check('SURFACT');
             end
 
             hasSHRATE    = isfield(fluid, 'shrate');
@@ -71,7 +71,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
 
             model = setupOperators@ThreePhaseBlackOilModel(model, varargin{:});
 
-            if model.surfactant
+            if model.nanoparticles
 
                 if nargin > 1
                     G = varargin{1};
@@ -93,7 +93,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
         % --------------------------------------------------------------------%
         function model = validateModel(model, varargin)
             model = validateModel@ThreePhaseBlackOilModel(model, varargin{:});
-            if model.surfactant && ~isfield(model.operators, 'veloc')
+            if model.nanoparticles && ~isfield(model.operators, 'veloc')
                 % Operators used to compute the approximated value of the square of the velocity at the cell center, (or capillary number)
                 G = model.G;
                model.operators.veloc = computeVelocTPFA(G, model.operators.internalConn);
@@ -113,27 +113,29 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 end
                 model.checkProperty(state, 'Polymermax', [nc, 1], [1, 2]);
             end
-            if model.surfactant
-                %check 'Surfactant' concentration
-                model.checkProperty(state, 'Surfactant', [nc, 1], [1, 2]);
-                %check 'SurfactanMax' maximum concentration
-                fn = model.getVariableField('SurfactantMax');
-                if ~isfield(state, fn)
-                    state.(fn) = model.getProp(state, 'Surfactant');
-                end
-                model.checkProperty(state, 'SurfactantMax', [nc, 1], [1, 2]);
-                %check 'SurfactantDepostion' concentration
-                fn1 = model.getVariableField('SurfactantDeposition');
+            if model.nanoparticles
+                %check 'Nanoparticles' concentration
+                model.checkProperty(state, 'Nanoparticles', [nc, 1], [1, 2]);
+                % %check 'SurfactanMax' maximum concentration
+                % fn = model.getVariableField('SurfactantMax');
+                % if ~isfield(state, fn)
+                %     state.(fn) = model.getProp(state, 'Nanoparticles');
+                % end
+                % model.checkProperty(state, 'SurfactantMax', [nc, 1], [1, 2]);
+                
+                %check 'NanoparticlesDepostion' concentration
+                fn1 = model.getVariableField('NanoparticlesDeposition');
                 if ~isfield(state, fn1)
-                    state.(fn1) = model.getProp(state, 'Surfactant');
+                    state.(fn1) = model.getProp(state, 'Nanoparticles');
                 end
-                model.checkProperty(state, 'SurfactantDeposition', [nc, 1], [1, 2]);
-                %check 'SurfactantEntrapment' concentration
-                fn2 = model.getVariableField('SurfactantEntrapment');
+                model.checkProperty(state, 'NanoparticlesDeposition', [nc, 1], [1, 2]);
+                
+                %check 'NanoparticlesEntrapment' concentration
+                fn2 = model.getVariableField('NanoparticlesEntrapment');
                 if ~isfield(state, fn2)
-                    state.(fn2) = model.getProp(state, 'Surfactant');
+                    state.(fn2) = model.getProp(state, 'Nanoparticles');
                 end
-                model.checkProperty(state, 'SurfactantEntrapment', [nc, 1], [1, 2]);
+                model.checkProperty(state, 'NanoparticlesEntrapment', [nc, 1], [1, 2]);
             end
         end
 
@@ -142,15 +144,19 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             [state, report] = updateState@ThreePhaseBlackOilModel(model, ...
                state, problem,  dx, drivingForces);
 
-            % cp denotes concentration of polymer, cs is concentration of surfactant.
+            % cp denotes concentration of polymer, cs is concentration of nanoparticles.
             if model.polymer
                 cp = model.getProp(state, 'polymer');
                 cp = min(cp, model.fluid.cpmax);
                 state = model.setProp(state, 'polymer', max(cp, 0));
             end
-            if model.surfactant
-                cs = model.getProp(state, 'surfactant');
-                state = model.setProp(state, 'surfactant', max(cs, 0));
+            if model.nanoparticles
+                cs = model.getProp(state, 'nanoparticles');
+                state = model.setProp(state, 'nanoparticles', cs);
+                cs1 = model.getProp(state, 'nanoparticlesdeposition');
+                state = model.setProp(state, 'nanoparticlesdeposition', cs1);
+                cs2 = model.getProp(state, 'nanoparticlesentrapment');
+                state = model.setProp(state, 'nanoparticlesentrapment', cs2);
             end
         end
 
@@ -163,14 +169,14 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 cpmax = model.getProp(state, 'polymermax');
                 state = model.setProp(state, 'polymermax', max(cpmax, cp));
             end
-            if model.surfactant
-                cs    = model.getProp(state, 'surfactant');
-                % csmax = model.getProp(state, 'surfactantmax');
-                cs1   = model.getProp(state, 'surfactantdeposition');
-                cs2   = model.getProp(state, 'surfactantentrapment');
-                state = model.setProp(state, 'surfactantmax', cs); %max(csmax, cs)
-                state = model.setProp(state, 'surfactantdeposition', cs1);%Note1
-                state = model.setProp(state, 'surfactantentrapment', cs2);%Note2
+            if model.nanoparticles
+                cs    = model.getProp(state, 'nanoparticles');
+                cs1   = model.getProp(state, 'nanoparticlesdeposition');
+                cs2   = model.getProp(state, 'nanoparticlesentrapment');
+
+                state = model.setProp(state, 'nanoparticles', cs);
+                state = model.setProp(state, 'nanoparticlesdeposition', cs1);
+                state = model.setProp(state, 'nanoparticlesentrapment', cs2);
             end
         end
 
@@ -188,12 +194,12 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 fd = model.FlowDiscretization;
                 pvtreg  = pp.getRegionPVT(model);
                 satreg  = fp.getRegionSaturation(model);
-                surfreg = fp.getRegionSurfactant(model);
+                % surfreg = fp.getRegionSurfactant(model);
 
                 % We set up EOR viscosities and relative permeabilities. They are computed from
                 % the black-oil value by using a multiplier approach, where we have
                 % one multiplier for each EOR effect.
-                pp = pp.setStateFunction('Viscosity', BlackOilViscosity(model, pvtreg));
+                pp = pp.setStateFunction('Viscosity', Viscosity(model, pvtreg));
                 % pp = pp.setStateFunction('BaseViscosity', BlackOilViscosity(model)); 
 
                 % kr_base = fp.getStateFunction('RelativePermeability');
@@ -253,7 +259,7 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                     end
                 end
 
-                if model.surfactant
+                if model.nanoparticles
                     % fp = fp.setStateFunction('CapillaryNumber', CapillaryNumber(model));
                     % fp = fp.setStateFunction('SurfactantAdsorption', SurfactantAdsorption(model, satreg));
                     % % The EOR relative permeability is set up as the
@@ -263,10 +269,15 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
 
                     % Insert State Functions
                     fp = fp.setStateFunction('CapillaryPressure', BlackOilCapillaryPressure(model, satreg));
-                    % pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
-                    % pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
+                    pp = pp.setStateFunction('FlowEfficiencyFactor', EORFlowEfficiency(model));
+                    pp = pp.setStateFunction('AbsolutePermReduction', EORAbsolutePermReduction(model));
                     pp = pp.setStateFunction('BasePoreVolume', PoreVolume(model,pvtreg));
                     pp = pp.setStateFunction('PoreVolume', EORPoreVolume(model,pvtreg));
+
+                    % fd = fd.setStateFunction('PhaseFlux', EORPhaseFlux(model));
+                    % fd = fd.setStateFunction('PhaseFlux', WaterBasedPhaseFlux(model));
+                    % fd = fd.setStateFunction('PhaseFlux', CounterCurrentPhaseFlux(model));
+                    fd = fd.setStateFunction('PermeabilityPotentialGradient', EORPermeabilityPotentialGradient(model));
 
                     % % Copy Flow Properties to PVT Properties Groupings
                     % pp = pp.setStateFunction('PVTBlackoilCapillaryPressure', PVTBlackoilCapillaryPressure(model));
@@ -300,13 +311,13 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                     fn = 'cp';
                 case {'polymermax', 'cpmax'}
                     fn = 'cpmax';
-                case {'surfactant', 'cs'}
+                case {'nanoparticles', 'cs'}
                     fn = 'cs';
                 case {'surfactantmax', 'csmax'}
                     fn = 'csmax';
-                case {'surfactantdeposition', 'cs1'}
+                case {'nanoparticlesdeposition', 'cs1'}
                     fn = 'cs1';
-                case {'surfactantentrapment', 'cs2'}
+                case {'nanoparticlesentrapment', 'cs2'}
                     fn = 'cs2';
                 case 'qwpoly'
                     fn = 'qWPoly';
@@ -324,8 +335,8 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             if model.polymer
                 names{end+1} = 'polymer';
             end
-            if model.surfactant
-                names{end+1} = 'surfactant';
+            if model.nanoparticles
+                names{end+1} = 'nanoparticles';
             end
         end
 
@@ -335,11 +346,12 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             state.SURFACT = double(cs);
             state.SURFCNM = log(double(Nc))/log(10);
             state.SURFST  = double(sigma);
-            % state.SURFADS = double(ads);
+            state.SURFADS = double(ads);
         end
 
         % --------------------------------------------------------------------%
         function scaling = getScalingFactorsCPR(model, problem, names, solver)
+            % Constrained Pressure Residual preconditioner. Scaling factors
             nNames = numel(names);
 
             scaling = cell(nNames, 1);
@@ -405,12 +417,14 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 qW = src.phaseMass{1}./model.fluid.rhoWS;
                 isInj = qW > 0;
                 qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
-              case {'surfactant'}
-                % Water based EOR, multiply by water flux divided by
-                % density and add into corresponding equation
-                qW = src.phaseMass{1}./model.fluid.rhoWS;
-                isInj = qW > 0;
-                qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
+                case {'nanoparticles'}
+                    return
+                % % Water based EOR, multiply by water flux divided by
+                % % density and add into corresponding equation
+                % qW = src.phaseMass{1}./model.fluid.rhoWS;
+                % isInj = qW > 0;
+                % qC = (isInj.*c' + ~isInj.*component(cells)).*qW;
+
               otherwise
                 error(['Unknown component ''', cname, '''. BC not implemented.']);
             end
@@ -424,8 +438,8 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 names{end+1} = 'polymerWells';
                 types{end+1} = 'perf';
             end
-            if model.surfactant
-                names{end+1} = 'surfactantWells';
+            if model.nanoparticles
+                names{end+1} = 'nanopariclesWells';
                 types{end+1} = 'perf';
             end
         end
@@ -435,14 +449,14 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
             if model.polymer
                 names{end+1} = 'qWPoly';
             end
-            if model.surfactant
+            if model.nanoparticles
                 names{end+1} = 'qWSft';
             end
         end
 
         function [compEqs, compSrc, eqNames, wellSol] = getExtraWellContributions(model, well, wellSol0, wellSol, q_s, bh, packed, qMass, qVol, dt, iteration)
             [compEqs, compSrc, eqNames, wellSol] = getExtraWellContributions@ThreePhaseBlackOilModel(model, well, wellSol0, wellSol, q_s, bh, packed, qMass, qVol, dt, iteration);
-            if model.polymer || model.surfactant
+            if model.polymer || model.nanoparticles
                 assert(model.water, 'Surfactant-Polymer injection requires a water phase.');
                 f = model.fluid;
 
@@ -476,11 +490,11 @@ classdef ThreePhaseNanoparticlesPolymerModel < ThreePhaseBlackOilModel
                 eqNames{end+1} = 'polymerWells';
             end
 
-            if model.surfactant
+            if model.nanoparticles
                 if well.isInjector()
-                    concWells = model.getProp(well.W, 'surfactant');
+                    concWells = model.getProp(well.W, 'nanoparticles');
                 else
-                    pixs = strcmpi(model.getComponentNames(), 'surfactant');
+                    pixs = strcmpi(model.getComponentNames(), 'nanoparticles');
                     concWells = packed.components{pixs};
                 end
                 cqS = concWells.*cqWs;
